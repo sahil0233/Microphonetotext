@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.recordButton {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+.recordButton:hover {
+    background-color: #0056b3;
+}
+
+/* live webcam */
+#videoElement {
+            width: 500px;
+            height: auto;
+        }
+.recordButton:disabled,
+.recordButton[disabled]{
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: #666666;
+}
+
+.outputText {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    min-height: 100px;
+    font-size: 18px;
+}
+
+    </style>
+    <title>Speech to Text</title>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Record your answer</h1>
+        <video id="videoElement" autoplay playsinline></video>
+        <button id="startButton" class="recordButton">Start Recording</button>
+        <button id="stopButton" class="recordButton" disabled>Stop Recording</button>
+        <div id="output" class="outputText"></div>
+    </div>
+
+    <script>
+        // live webcam
+        let stream;
+        const video = document.getElementById('videoElement');
+      const startButton = document.getElementById('startButton');
+      const stopButton = document.getElementById('stopButton');
+const outputDiv = document.getElementById('output');
+const recognition = new webkitSpeechRecognition() || new SpeechRecognition();
+
+recognition.interimResults = true;
+recognition.continuous = true;
+
+stopButton.addEventListener('click', () => {
+    recognition.stop();
+    stopButton.disabled = true;
+    // live webcam
+    let tracks = stream.getTracks();
+            tracks.forEach(function(track) {
+                track.stop();
+            });
+
+            video.srcObject = null;
+})
+
+startButton.addEventListener('click', () => {
+    recognition.start();
+    stopButton.disabled=false;
+    startButton.disabled = true;
+    startButton.textContent = 'Recording...';
+    // live webcam
+    if (navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function (streamData) {
+                    stream = streamData;
+                    video.srcObject = stream;
+                })
+                .catch(function (error) {
+                    console.log("Something went wrong: " + error);
+                });
+            }
+});
+
+recognition.onresult = event => {
+    const result = event.results[event.results.length - 1][0].transcript;
+    outputDiv.textContent = result;
+};
+
+recognition.onend = () => {
+    startButton.disabled = false;
+    startButton.textContent = 'Start Recording';
+};
+
+recognition.onerror = event => {
+    console.error('Speech recognition error:', event.error);
+};
+
+recognition.onnomatch = () => {
+    console.log('No speech was recognized.');
+};
+
+    </script>
+</body>
+</html>
